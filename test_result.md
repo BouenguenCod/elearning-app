@@ -203,16 +203,19 @@ frontend:
         comment: "Interface formateur pour créer/gérer ses cours, formulaire de création de cours, liste des cours personnels"
 
   - task: "Interface de modification des cours (sections/chapitres)"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Placeholder créé pour l'éditeur de cours, nécessite implémentation complète pour gérer sections et chapitres"
+      - working: "NA"
+        agent: "main"
+        comment: "Implémentation complète de l'éditeur de cours avec: création de sections, création de chapitres (gratuits/payants), affichage hiérarchique, formulaires intuitifs, publication des cours, interface responsive"
 
 metadata:
   created_by: "main_agent"
