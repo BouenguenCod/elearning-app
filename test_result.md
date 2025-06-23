@@ -249,9 +249,9 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Conversion backend FastAPI vers Node.js/Express"
+    - "Statistiques de ventes pour instructeurs"
     - "Interface de modification des cours (sections/chapitres)"
-    - "Dashboard formateur avec gestion des cours"
-    - "Système d'authentification React"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -263,3 +263,5 @@ agent_communication:
     message: "Tests backend réalisés avec succès. Toutes les fonctionnalités backend ont été testées et fonctionnent correctement. J'ai créé un script de test complet (backend_test.py) qui vérifie l'authentification multi-rôles, la gestion des cours pour les formateurs, et l'API publique des cours. Tous les tests ont réussi avec un taux de succès de 100%."
   - agent: "main"
     message: "Implémentation complète de l'éditeur de cours : interface pour créer sections et chapitres, formulaires intuitifs, gestion des chapitres gratuits/payants, affichage hiérarchique, publication des cours. Tous les composants CourseEditor, SectionForm et ChapterForm sont fonctionnels. Prêt pour tests frontend."
+  - agent: "main"
+    message: "TRANSFORMATION MAJEURE : Conversion complète backend MongoDB → MariaDB/Sequelize avec Node.js/Express. Schéma SQL complet fourni avec 7 tables optimisées, relations foreign keys, index, vues, procédures stockées. Statistiques de ventes complètes ajoutées. Toutes les API maintenues pour compatibilité frontend. Architecture SQL optimisée pour performance. Prêt pour tests complets MariaDB."
