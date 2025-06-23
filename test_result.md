@@ -225,8 +225,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Authentification multi-rôles (JWT)"
-    - "CRUD des cours pour formateurs"
+    - "Interface de modification des cours (sections/chapitres)"
+    - "Dashboard formateur avec gestion des cours"
     - "Système d'authentification React"
   stuck_tasks: []
   test_all: false
@@ -237,3 +237,5 @@ agent_communication:
     message: "Implémentation initiale complète de l'application e-learning avec authentification, gestion des cours de base et interfaces utilisateur. Structure MongoDB avec UUID au lieu d'ObjectID. Prêt pour tests backend des fonctionnalités principales."
   - agent: "testing"
     message: "Tests backend réalisés avec succès. Toutes les fonctionnalités backend ont été testées et fonctionnent correctement. J'ai créé un script de test complet (backend_test.py) qui vérifie l'authentification multi-rôles, la gestion des cours pour les formateurs, et l'API publique des cours. Tous les tests ont réussi avec un taux de succès de 100%."
+  - agent: "main"
+    message: "Implémentation complète de l'éditeur de cours : interface pour créer sections et chapitres, formulaires intuitifs, gestion des chapitres gratuits/payants, affichage hiérarchique, publication des cours. Tous les composants CourseEditor, SectionForm et ChapterForm sont fonctionnels. Prêt pour tests frontend."
