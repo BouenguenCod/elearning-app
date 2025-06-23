@@ -605,7 +605,179 @@ const InstructorDashboard = () => {
   );
 };
 
-// Create Course Form Component
+// Statistics View Component
+const StatisticsView = ({ statistics }) => {
+  if (!statistics) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Chargement des statistiques...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8 space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm">Revenus Totaux</p>
+              <p className="text-3xl font-bold">{statistics.totalRevenue.toFixed(2)}€</p>
+            </div>
+            <div className="text-4xl">💰</div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm">Ventes Totales</p>
+              <p className="text-3xl font-bold">{statistics.totalSales}</p>
+            </div>
+            <div className="text-4xl">🛍️</div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-100 text-sm">Revenu Moyen</p>
+              <p className="text-3xl font-bold">
+                {statistics.totalSales > 0 ? (statistics.totalRevenue / statistics.totalSales).toFixed(2) : '0.00'}€
+              </p>
+            </div>
+            <div className="text-4xl">📊</div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-sm">Ce Mois</p>
+              <p className="text-3xl font-bold">
+                {statistics.chartData.length > 0 
+                  ? statistics.chartData[statistics.chartData.length - 1].revenue.toFixed(2)
+                  : '0.00'
+                }€
+              </p>
+            </div>
+            <div className="text-4xl">📈</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts and Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Monthly Revenue Chart */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold mb-4">Revenus Mensuels (12 derniers mois)</h3>
+          {statistics.chartData.length > 0 ? (
+            <div className="space-y-2">
+              {statistics.chartData.map((month, index) => (
+                <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                  <span className="text-sm font-medium text-gray-700">{month.month}</span>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">{month.sales} vente(s)</span>
+                    <span className="font-bold text-green-600">{month.revenue.toFixed(2)}€</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">Aucune donnée disponible</p>
+          )}
+        </div>
+
+        {/* Top Selling Items */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold mb-4">Top des Ventes</h3>
+          {statistics.topItems.length > 0 ? (
+            <div className="space-y-3">
+              {statistics.topItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="font-medium text-sm">{item.title}</p>
+                      <p className="text-xs text-gray-500 capitalize">{item.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">{item.revenue.toFixed(2)}€</p>
+                    <p className="text-xs text-gray-500">{item.sales} vente(s)</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">Aucune vente enregistrée</p>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Purchases */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h3 className="text-xl font-bold mb-4">Achats Récents</h3>
+        {statistics.recentPurchases.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Étudiant</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Article</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Montant</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statistics.recentPurchases.map((purchase, index) => (
+                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4">{purchase.student_name}</td>
+                    <td className="py-3 px-4">{purchase.item_title}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        purchase.item_type === 'course' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {purchase.item_type === 'course' ? 'Cours' : 'Chapitre'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-bold text-green-600">{purchase.amount.toFixed(2)}€</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      {new Date(purchase.purchased_at).toLocaleDateString('fr-FR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">Aucun achat récent</p>
+        )}
+      </div>
+
+      {/* Test Purchase Section */}
+      <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+        <h3 className="text-lg font-bold text-blue-900 mb-2">🧪 Zone de Test</h3>
+        <p className="text-blue-700 text-sm mb-4">
+          Utilisez les boutons 💰 sur vos cours publiés pour simuler des achats et voir les statistiques en action.
+        </p>
+        <div className="flex items-center space-x-2 text-blue-600">
+          <span className="text-sm">💡</span>
+          <span className="text-sm">Les vraies transactions seront gérées par PayPal en production.</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 const CreateCourseForm = ({ onSuccess, onCancel }) => {
   const { apiUrl, token } = useAuth();
   const [formData, setFormData] = useState({
