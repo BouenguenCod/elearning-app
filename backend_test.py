@@ -99,7 +99,7 @@ def make_request(method: str, endpoint: str, data: Optional[Dict[str, Any]] = No
 
 def register_user(user_data: Dict[str, Any]) -> Dict[str, Any]:
     """Register a new user"""
-    return make_request("post", "/auth/register", user_data)
+    return make_request("post", "/auth/register", user_data, expected_status=201)
 
 def login_user(email: str, password: str) -> Dict[str, Any]:
     """Login a user"""
@@ -111,7 +111,7 @@ def get_user_info(token: str) -> Dict[str, Any]:
 
 def create_course(token: str, course_data: Dict[str, Any]) -> Dict[str, Any]:
     """Create a new course"""
-    return make_request("post", "/courses", course_data, token)
+    return make_request("post", "/courses", course_data, token, expected_status=201)
 
 def get_instructor_courses(token: str) -> Dict[str, Any]:
     """Get instructor's courses"""
@@ -123,11 +123,11 @@ def update_course(token: str, course_id: str, course_data: Dict[str, Any]) -> Di
 
 def create_section(token: str, course_id: str, section_data: Dict[str, Any]) -> Dict[str, Any]:
     """Create a section in a course"""
-    return make_request("post", f"/courses/{course_id}/sections", section_data, token)
+    return make_request("post", f"/courses/{course_id}/sections", section_data, token, expected_status=201)
 
 def create_chapter(token: str, course_id: str, section_id: str, chapter_data: Dict[str, Any]) -> Dict[str, Any]:
     """Create a chapter in a section"""
-    return make_request("post", f"/courses/{course_id}/sections/{section_id}/chapters", chapter_data, token)
+    return make_request("post", f"/courses/{course_id}/sections/{section_id}/chapters", chapter_data, token, expected_status=201)
 
 def publish_course(token: str, course_id: str) -> Dict[str, Any]:
     """Publish a course"""
@@ -136,6 +136,14 @@ def publish_course(token: str, course_id: str) -> Dict[str, Any]:
 def get_published_courses() -> Dict[str, Any]:
     """Get all published courses"""
     return make_request("get", "/courses")
+
+def create_purchase(token: str, purchase_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a purchase"""
+    return make_request("post", "/purchases", purchase_data, token, expected_status=201)
+
+def get_instructor_statistics(token: str) -> Dict[str, Any]:
+    """Get instructor statistics"""
+    return make_request("get", "/instructor/statistics", token=token)
 
 # Test functions
 def test_user_registration():
@@ -191,7 +199,11 @@ def test_user_login():
     log_test("Reject login for non-existent user", nonexistent_user, 
              "Login was rejected as expected" if nonexistent_user else "Failed to reject non-existent user")
     
-    return instructor_token if valid_login else None
+    # Get student token for later tests
+    student_result = login_user(STUDENT_USER["email"], STUDENT_USER["password"])
+    student_token = student_result.get("data", {}).get("access_token") if "error" not in student_result else None
+    
+    return instructor_token, student_token
 
 def test_user_info(token: str):
     """Test retrieving user information with JWT token"""
@@ -216,8 +228,8 @@ def test_course_creation(token: str):
     print("\n=== Testing Course Creation ===")
     
     course_data = {
-        "title": "Test Course",
-        "description": "This is a test course for API testing",
+        "title": "Test Course with MariaDB",
+        "description": "This is a test course for API testing with MariaDB/Sequelize",
         "thumbnail": "https://example.com/thumbnail.jpg",
         "price": 29.99
     }
@@ -247,8 +259,8 @@ def test_course_update(token: str, course_id: str):
     print("\n=== Testing Course Update ===")
     
     updated_data = {
-        "title": "Updated Test Course",
-        "description": "This course has been updated for testing",
+        "title": "Updated MariaDB Test Course",
+        "description": "This course has been updated for testing with MariaDB/Sequelize",
         "thumbnail": "https://example.com/new-thumbnail.jpg",
         "price": 39.99
     }
@@ -265,8 +277,8 @@ def test_section_creation(token: str, course_id: str):
     print("\n=== Testing Section Creation ===")
     
     section_data = {
-        "title": "Test Section",
-        "description": "This is a test section for API testing"
+        "title": "Test Section with MariaDB",
+        "description": "This is a test section for API testing with MariaDB/Sequelize"
     }
     
     result = create_section(token, course_id, section_data)
@@ -283,21 +295,22 @@ def test_chapter_creation(token: str, course_id: str, section_id: str):
     
     # Create free chapter
     free_chapter_data = {
-        "title": "Free Test Chapter",
-        "description": "This is a free test chapter",
+        "title": "Free Test Chapter with MariaDB",
+        "description": "This is a free test chapter with MariaDB/Sequelize",
         "video_url": "https://example.com/video1.mp4",
         "chapter_type": "free"
     }
     
     result = create_chapter(token, course_id, section_id, free_chapter_data)
     free_success = "error" not in result
+    free_chapter_id = result.get("data", {}).get("id") if free_success else None
     log_test("Create free chapter", free_success, 
              result.get("error", "Free chapter created successfully"))
     
     # Create paid chapter
     paid_chapter_data = {
-        "title": "Paid Test Chapter",
-        "description": "This is a paid test chapter",
+        "title": "Paid Test Chapter with MariaDB",
+        "description": "This is a paid test chapter with MariaDB/Sequelize",
         "video_url": "https://example.com/video2.mp4",
         "chapter_type": "paid",
         "price": 9.99
@@ -305,10 +318,11 @@ def test_chapter_creation(token: str, course_id: str, section_id: str):
     
     result = create_chapter(token, course_id, section_id, paid_chapter_data)
     paid_success = "error" not in result
+    paid_chapter_id = result.get("data", {}).get("id") if paid_success else None
     log_test("Create paid chapter", paid_success, 
              result.get("error", "Paid chapter created successfully"))
     
-    return free_success and paid_success
+    return (free_success and paid_success, free_chapter_id, paid_chapter_id)
 
 def test_course_publication(token: str, course_id: str):
     """Test publishing a course"""
@@ -333,23 +347,86 @@ def test_public_courses():
     
     return success
 
+def test_purchases(student_token: str, course_id: str, chapter_id: str):
+    """Test creating purchases"""
+    print("\n=== Testing Purchases ===")
+    
+    # Purchase a course
+    course_purchase_data = {
+        "item_type": "course",
+        "item_id": course_id,
+        "amount": 39.99
+    }
+    
+    result = create_purchase(student_token, course_purchase_data)
+    course_purchase_success = "error" not in result
+    log_test("Purchase course", course_purchase_success, 
+             result.get("error", "Course purchased successfully"))
+    
+    # Purchase a chapter
+    chapter_purchase_data = {
+        "item_type": "chapter",
+        "item_id": chapter_id,
+        "amount": 9.99
+    }
+    
+    result = create_purchase(student_token, chapter_purchase_data)
+    chapter_purchase_success = "error" not in result
+    log_test("Purchase chapter", chapter_purchase_success, 
+             result.get("error", "Chapter purchased successfully"))
+    
+    return course_purchase_success and chapter_purchase_success
+
+def test_instructor_statistics(token: str):
+    """Test instructor statistics"""
+    print("\n=== Testing Instructor Statistics ===")
+    
+    result = get_instructor_statistics(token)
+    success = "error" not in result
+    
+    if success:
+        stats = result.get("data", {})
+        total_revenue = stats.get("totalRevenue", 0)
+        total_sales = stats.get("totalSales", 0)
+        chart_data = stats.get("chartData", [])
+        top_items = stats.get("topItems", [])
+        recent_purchases = stats.get("recentPurchases", [])
+        
+        details = (
+            f"Total Revenue: {total_revenue}, "
+            f"Total Sales: {total_sales}, "
+            f"Chart Data Points: {len(chart_data)}, "
+            f"Top Items: {len(top_items)}, "
+            f"Recent Purchases: {len(recent_purchases)}"
+        )
+    else:
+        details = result.get("error", "Unknown error")
+    
+    log_test("Get instructor statistics", success, details)
+    
+    return success
+
 def run_all_tests():
     """Run all tests in sequence"""
-    print("\n🔍 STARTING E-LEARNING BACKEND API TESTS 🔍\n")
+    print("\n🔍 STARTING E-LEARNING BACKEND API TESTS (MariaDB/Sequelize) 🔍\n")
     
     # Test user registration
     instructor_reg, student_reg, admin_reg = test_user_registration()
     
     # If registration failed, try logging in with existing accounts
-    if not instructor_reg:
-        print("Instructor registration failed, trying to login with existing account...")
+    if not instructor_reg or not student_reg:
+        print("Registration failed for some users, trying to login with existing accounts...")
     
     # Test user login
-    instructor_token = test_user_login()
+    instructor_token, student_token = test_user_login()
     
     if not instructor_token:
-        print("❌ Cannot proceed with course tests without instructor token")
+        print("❌ Cannot proceed with instructor tests without instructor token")
         return
+    
+    if not student_token:
+        print("❌ Cannot proceed with student purchase tests without student token")
+        # Continue with other tests
     
     # Test user info retrieval
     user_info_success = test_user_info(instructor_token)
@@ -375,13 +452,25 @@ def run_all_tests():
         return
     
     # Test chapter creation
-    chapter_creation_success = test_chapter_creation(instructor_token, course_id, section_id)
+    chapter_creation_success, free_chapter_id, paid_chapter_id = test_chapter_creation(instructor_token, course_id, section_id)
     
     # Test course publication
     publication_success = test_course_publication(instructor_token, course_id)
     
     # Test public courses API
     public_courses_success = test_public_courses()
+    
+    # Test purchases (new in MariaDB version)
+    purchases_success = False
+    if student_token and paid_chapter_id:
+        purchases_success = test_purchases(student_token, course_id, paid_chapter_id)
+    
+    # Test instructor statistics (new in MariaDB version)
+    statistics_success = False
+    if purchases_success:
+        # Wait a moment for purchases to be processed
+        time.sleep(1)
+        statistics_success = test_instructor_statistics(instructor_token)
     
     # Print summary
     print("\n=== TEST SUMMARY ===")
@@ -391,7 +480,7 @@ def run_all_tests():
     print(f"Success rate: {(test_results['passed'] / test_results['total']) * 100:.2f}%")
     
     if test_results['failed'] == 0:
-        print("\n✅ ALL TESTS PASSED! The backend API is working correctly.")
+        print("\n✅ ALL TESTS PASSED! The Node.js/Express backend with MariaDB/Sequelize is working correctly.")
     else:
         print("\n❌ SOME TESTS FAILED. Please check the details above.")
 
