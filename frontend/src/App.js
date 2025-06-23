@@ -628,25 +628,407 @@ const CreateCourseForm = ({ onSuccess, onCancel }) => {
   );
 };
 
-// Course Editor Component (placeholder for now)
+// Course Editor Component
 const CourseEditor = ({ course, onBack, onUpdate }) => {
+  const { apiUrl, token } = useAuth();
+  const [courseData, setCourseData] = useState(course);
+  const [showSectionForm, setShowSectionForm] = useState(false);
+  const [showChapterForm, setShowChapterForm] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchCourseData = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/courses/${course.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCourseData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching course data:', error);
+    }
+  };
+
+  const createSection = async (sectionData) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/courses/${course.id}/sections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(sectionData)
+      });
+
+      if (response.ok) {
+        await fetchCourseData();
+        setShowSectionForm(false);
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error creating section:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createChapter = async (sectionId, chapterData) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/courses/${course.id}/sections/${sectionId}/chapters`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(chapterData)
+      });
+
+      if (response.ok) {
+        await fetchCourseData();
+        setShowChapterForm(null);
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error creating chapter:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const publishCourse = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiUrl}/api/courses/${course.id}/publish`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        await fetchCourseData();
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error publishing course:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Modifier: {course.title}</h2>
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Modifier: {courseData.title}</h2>
+          <div className="flex items-center space-x-4">
+            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              courseData.is_published 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {courseData.is_published ? 'Publié' : 'Brouillon'}
+            </span>
+            <span className="text-sm text-gray-600">
+              {courseData.sections.length} section(s)
+            </span>
+          </div>
+        </div>
+        <div className="flex space-x-4">
+          {!courseData.is_published && (
+            <button
+              onClick={publishCourse}
+              disabled={loading}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {loading ? 'Publication...' : 'Publier le cours'}
+            </button>
+          )}
+          <button
+            onClick={onBack}
+            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+          >
+            ← Retour
+          </button>
+        </div>
+      </div>
+
+      {/* Course Description */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <p className="text-gray-700">{courseData.description}</p>
+        {courseData.price && (
+          <p className="text-sm text-gray-600 mt-2">Prix: {courseData.price}€</p>
+        )}
+      </div>
+
+      {/* Add Section Button */}
+      <div className="mb-6">
         <button
-          onClick={onBack}
-          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+          onClick={() => setShowSectionForm(!showSectionForm)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
         >
-          ← Retour
+          {showSectionForm ? 'Annuler' : '+ Ajouter une section'}
         </button>
       </div>
-      
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🚧</div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Éditeur de cours</h3>
-        <p className="text-gray-600">L'éditeur de sections et chapitres sera implémenté dans la prochaine étape.</p>
+
+      {/* Section Form */}
+      {showSectionForm && (
+        <SectionForm 
+          onSubmit={createSection}
+          onCancel={() => setShowSectionForm(false)}
+          loading={loading}
+        />
+      )}
+
+      {/* Sections List */}
+      <div className="space-y-6">
+        {courseData.sections.map((section, sectionIndex) => (
+          <div key={section.id} className="border border-gray-200 rounded-lg">
+            <div className="bg-gray-50 p-4 border-b">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">{section.title}</h3>
+                  {section.description && (
+                    <p className="text-gray-600 text-sm mt-1">{section.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {section.chapters.length} chapitre(s)
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowChapterForm(showChapterForm === section.id ? null : section.id)}
+                  className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition"
+                >
+                  + Ajouter un chapitre
+                </button>
+              </div>
+            </div>
+
+            {/* Chapter Form */}
+            {showChapterForm === section.id && (
+              <div className="p-4 bg-blue-50 border-b">
+                <ChapterForm 
+                  onSubmit={(chapterData) => createChapter(section.id, chapterData)}
+                  onCancel={() => setShowChapterForm(null)}
+                  loading={loading}
+                />
+              </div>
+            )}
+
+            {/* Chapters List */}
+            <div className="p-4">
+              {section.chapters.length > 0 ? (
+                <div className="space-y-3">
+                  {section.chapters.map((chapter, chapterIndex) => (
+                    <div key={chapter.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm font-medium text-gray-500">
+                            {chapterIndex + 1}.
+                          </span>
+                          <div>
+                            <h4 className="font-medium">{chapter.title}</h4>
+                            <p className="text-sm text-gray-600">{chapter.description}</p>
+                            {chapter.video_url && (
+                              <p className="text-xs text-blue-600 mt-1">📹 Vidéo: {chapter.video_url}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          chapter.chapter_type === 'free' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {chapter.chapter_type === 'free' ? 'Gratuit' : `Payant (${chapter.price}€)`}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm italic">Aucun chapitre dans cette section</p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
+
+      {courseData.sections.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">📚</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune section</h3>
+          <p className="text-gray-600">Commencez par ajouter une section à votre cours.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Section Form Component
+const SectionForm = ({ onSubmit, onCancel, loading }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="bg-blue-50 p-4 rounded-lg mb-6">
+      <h3 className="text-lg font-semibold mb-4">Nouvelle Section</h3>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Titre de la section</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description (optionnel)</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            rows="3"
+          />
+        </div>
+        <div className="flex space-x-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {loading ? 'Création...' : 'Créer la section'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Chapter Form Component
+const ChapterForm = ({ onSubmit, onCancel, loading }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    video_url: '',
+    chapter_type: 'free',
+    price: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const chapterData = {
+      ...formData,
+      price: formData.chapter_type === 'paid' && formData.price ? parseFloat(formData.price) : null
+    };
+    onSubmit(chapterData);
+  };
+
+  return (
+    <div>
+      <h4 className="text-md font-semibold mb-4">Nouveau Chapitre</h4>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Titre du chapitre</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Type de chapitre</label>
+            <select
+              value={formData.chapter_type}
+              onChange={(e) => setFormData({...formData, chapter_type: e.target.value})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            >
+              <option value="free">Gratuit</option>
+              <option value="paid">Payant</option>
+            </select>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            rows="3"
+            required
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">URL de la vidéo (optionnel)</label>
+          <input
+            type="url"
+            value={formData.video_url}
+            onChange={(e) => setFormData({...formData, video_url: e.target.value})}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            placeholder="https://example.com/video.mp4"
+          />
+        </div>
+        
+        {formData.chapter_type === 'paid' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Prix (€)</label>
+            <input
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: e.target.value})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              placeholder="9.99"
+              step="0.01"
+              min="0"
+              required
+            />
+          </div>
+        )}
+        
+        <div className="flex space-x-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50"
+          >
+            {loading ? 'Création...' : 'Créer le chapitre'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
