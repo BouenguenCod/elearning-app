@@ -152,15 +152,18 @@ backend:
 
   - task: "API publique des cours pour étudiants"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Route /api/courses pour récupérer les cours publiés accessible aux étudiants"
+      - working: true
+        agent: "testing"
+        comment: "Test réussi pour la récupération des cours publiés. L'API publique fonctionne correctement et renvoie uniquement les cours qui ont été publiés."
 
 frontend:
   - task: "Système d'authentification React"
