@@ -137,15 +137,18 @@ backend:
 
   - task: "CRUD des cours pour formateurs"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implémenté routes pour création, lecture, mise à jour des cours (/api/courses), gestion des sections et chapitres, publication des cours, autorisation par rôle"
+      - working: true
+        agent: "testing"
+        comment: "Tests réussis pour la création, récupération et mise à jour des cours par un formateur. La création de sections et chapitres (gratuits et payants) fonctionne correctement. La publication d'un cours est également opérationnelle. Toutes les routes CRUD pour les formateurs fonctionnent comme prévu avec la vérification des autorisations."
 
   - task: "API publique des cours pour étudiants"
     implemented: true
