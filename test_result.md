@@ -122,15 +122,18 @@ backend:
 
   - task: "Modèles de données (User, Course, Section, Chapter)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Créé modèles Pydantic pour User, Course, Section, Chapter avec champs appropriés, énums pour UserRole et ChapterType, structure hiérarchique complète"
+      - working: true
+        agent: "testing"
+        comment: "Les modèles de données sont correctement implémentés et fonctionnent comme prévu. Les tests ont validé la création et manipulation des objets User, Course, Section et Chapter avec leurs relations hiérarchiques."
 
   - task: "CRUD des cours pour formateurs"
     implemented: true
