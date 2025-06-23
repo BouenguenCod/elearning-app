@@ -1,7 +1,7 @@
 {
   "name": "elearning-backend",
-  "version": "1.0.0",
-  "description": "Backend Node.js pour l'application e-learning",
+  "version": "2.0.0",
+  "description": "Backend Node.js pour l'application e-learning avec MariaDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "mongoose": "^7.6.3",
+    "sequelize": "^6.33.0",
+    "mariadb": "^3.2.2",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
