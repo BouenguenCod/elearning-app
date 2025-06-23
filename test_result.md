@@ -107,15 +107,18 @@ user_problem_statement: "Application e-learning avec ReactJS et ExpressJS divis�
 backend:
   - task: "Authentification multi-rôles (JWT)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implémenté système d'authentification JWT avec roles (student, instructor, admin), hash des mots de passe avec bcrypt, routes /api/auth/register, /api/auth/login, /api/auth/me"
+      - working: true
+        agent: "testing"
+        comment: "Tests réussis pour l'inscription avec différents rôles (student, instructor, admin), connexion avec credentials valides/invalides, et récupération des informations utilisateur avec token JWT. Toutes les routes d'authentification fonctionnent correctement."
 
   - task: "Modèles de données (User, Course, Section, Chapter)"
     implemented: true
