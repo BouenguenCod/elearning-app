@@ -408,6 +408,8 @@ const InstructorDashboard = () => {
   const [courses, setCourses] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -432,21 +434,88 @@ const InstructorDashboard = () => {
     }
   };
 
+  const fetchStatistics = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/instructor/statistics`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStatistics(data);
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    }
+  };
+
+  const handleShowStatistics = () => {
+    setShowStatistics(true);
+    setSelectedCourse(null);
+    setShowCreateForm(false);
+    fetchStatistics();
+  };
+
+  const simulatePurchase = async (courseId, amount) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/purchases`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          item_type: 'course',
+          item_id: courseId,
+          amount: amount
+        })
+      });
+      if (response.ok) {
+        fetchStatistics();
+      }
+    } catch (error) {
+      console.error('Error simulating purchase:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-8 px-4">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes Cours</h1>
-            <p className="text-gray-600">Gérez vos cours et contenus</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Tableau de Bord Formateur</h1>
+            <p className="text-gray-600">Gérez vos cours et suivez vos performances</p>
           </div>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition"
-          >
-            {showCreateForm ? 'Annuler' : 'Nouveau Cours'}
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={handleShowStatistics}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${
+                showStatistics 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              📊 Statistiques
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateForm(!showCreateForm);
+                setShowStatistics(false);
+                setSelectedCourse(null);
+              }}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${
+                showCreateForm 
+                  ? 'bg-red-600 text-white' 
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+              }`}
+            >
+              {showCreateForm ? 'Annuler' : 'Nouveau Cours'}
+            </button>
+          </div>
         </div>
+
+        {showStatistics && <StatisticsView statistics={statistics} />}
 
         {showCreateForm && (
           <CreateCourseForm 
@@ -466,7 +535,7 @@ const InstructorDashboard = () => {
           />
         )}
 
-        {!showCreateForm && !selectedCourse && (
+        {!showCreateForm && !selectedCourse && !showStatistics && (
           <>
             {loading ? (
               <div className="text-center py-8">
@@ -489,16 +558,32 @@ const InstructorDashboard = () => {
                         </span>
                       </div>
                       <p className="text-gray-600 mb-4">{course.description}</p>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <span className="text-sm text-gray-500">
                           {course.sections.length} section(s)
                         </span>
+                        {course.price && (
+                          <span className="text-lg font-bold text-green-600">
+                            {course.price}€
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
                         <button
                           onClick={() => setSelectedCourse(course)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+                          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
                         >
                           Modifier
                         </button>
+                        {course.is_published && course.price && (
+                          <button
+                            onClick={() => simulatePurchase(course.id, course.price)}
+                            className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition"
+                            title="Simuler un achat"
+                          >
+                            💰
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
