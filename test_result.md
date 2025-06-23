@@ -217,11 +217,17 @@ frontend:
         agent: "main"
         comment: "Implémentation complète de l'éditeur de cours avec: création de sections, création de chapitres (gratuits/payants), affichage hiérarchique, formulaires intuitifs, publication des cours, interface responsive"
 
-metadata:
-  created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
-  run_ui: false
+  - task: "Statistiques de ventes pour instructeurs"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implémentation complète des statistiques de ventes: revenus totaux, nombre d'achats, données mensuelles, top des ventes, achats récents, statistiques par cours et chapitre"
 
 test_plan:
   current_focus:
