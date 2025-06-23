@@ -229,6 +229,24 @@ frontend:
         agent: "main"
         comment: "Implémentation complète des statistiques de ventes: revenus totaux, nombre d'achats, données mensuelles, top des ventes, achats récents, statistiques par cours et chapitre"
 
+  - task: "Conversion backend FastAPI vers Node.js/Express"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Conversion complète du backend Python/FastAPI vers Node.js/Express avec Mongoose pour MongoDB, tous les endpoints existants maintenus, nouvelles fonctionnalités de statistiques ajoutées"
+
+metadata:
+  created_by: "main_agent"
+  version: "2.0"
+  test_sequence: 2
+  run_ui: false
+
 test_plan:
   current_focus:
     - "Interface de modification des cours (sections/chapitres)"
